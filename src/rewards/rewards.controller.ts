@@ -161,26 +161,26 @@ export class RewardsController {
         }
     }
 
-    @ApiOperation({ summary: 'Claim a reward by ID for a customer' })
-    @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
-    @ApiResponse({ status: 200, description: 'Reward claimed successfully' })
-    @ApiResponse({ status: 500, description: 'Internal server error' })
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.CUSTOMER)
-    @Patch(':id/claim')
-    async claimReward(@Param('id', new ParseIntPipe()) id: number, @Request() req) {
-        try {
-            const updatedReward = await this.rewardsService.decrementAvailableRewardsCount(id);
-            this.logger.log(`Reward claimed successfully with ID: ${id} by user ID: ${req.user.id}`);
-            return {
-                message: 'Reward claimed successfully',
-                reward: updatedReward,
-            };
-        } catch (error) {
-            this.logger.error(`Failed to claim reward with ID ${id}: ${error.message}`, error.stack);
-            throw new InternalServerErrorException('An error occurred while claiming the reward');
-        }
-    }
+    // @ApiOperation({ summary: 'Claim a reward by ID for a customer' })
+    // @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
+    // @ApiResponse({ status: 200, description: 'Reward claimed successfully' })
+    // @ApiResponse({ status: 500, description: 'Internal server error' })
+    // @UseGuards(JwtAuthGuard, RolesGuard)
+    // @Roles(UserRole.CUSTOMER)
+    // @Patch(':id/claim')
+    // async claimReward(@Param('id', new ParseIntPipe()) id: number, @Request() req) {
+    //     try {
+    //         const updatedReward = await this.rewardsService.decrementAvailableRewardsCount(id);
+    //         this.logger.log(`Reward claimed successfully with ID: ${id} by user ID: ${req.user.id}`);
+    //         return {
+    //             message: 'Reward claimed successfully',
+    //             reward: updatedReward,
+    //         };
+    //     } catch (error) {
+    //         this.logger.error(`Failed to claim reward with ID ${id}: ${error.message}`, error.stack);
+    //         throw new InternalServerErrorException('An error occurred while claiming the reward');
+    //     }
+    // }
 
 
 

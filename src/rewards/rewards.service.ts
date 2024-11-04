@@ -96,22 +96,22 @@ export class RewardsService {
         }
     }
 
-    async decrementAvailableRewardsCount(id: number): Promise<Reward> {
-        try {
-            const reward = await this.findOne(id);
-            if (reward.totalAvailableRewardsCount <= 0) {
-                this.logger.warn(`No rewards available to claim for ID: ${id}`);
-                throw new BadRequestException('No rewards available to claim');
-            }
-            reward.totalAvailableRewardsCount -= 1;
-            const updatedReward = await this.rewardsRepository.save(reward);
-            this.logger.log(`Decremented reward count for ID: ${id}`);
-            return updatedReward;
-        } catch (error) {
-            this.logger.error(`Failed to decrement reward count for ID ${id}: ${error.message}`, error.stack);
-            throw error instanceof BadRequestException ? error : new InternalServerErrorException('An error occurred while claiming the reward');
-        }
-    }
+    // async decrementAvailableRewardsCount(id: number): Promise<Reward> {
+    //     try {
+    //         const reward = await this.findOne(id);
+    //         if (reward.totalAvailableRewardsCount <= 0) {
+    //             this.logger.warn(`No rewards available to claim for ID: ${id}`);
+    //             throw new BadRequestException('No rewards available to claim');
+    //         }
+    //         reward.totalAvailableRewardsCount -= 1;
+    //         const updatedReward = await this.rewardsRepository.save(reward);
+    //         this.logger.log(`Decremented reward count for ID: ${id}`);
+    //         return updatedReward;
+    //     } catch (error) {
+    //         this.logger.error(`Failed to decrement reward count for ID ${id}: ${error.message}`, error.stack);
+    //         throw error instanceof BadRequestException ? error : new InternalServerErrorException('An error occurred while claiming the reward');
+    //     }
+    // }
 
     async findAllAvailable(
         page = 1,
