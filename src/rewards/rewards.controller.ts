@@ -1,4 +1,19 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards, Request, DefaultValuePipe } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Query,
+    UseGuards,
+    Request,
+    DefaultValuePipe,
+    InternalServerErrorException,
+    NotFoundException,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles/roles.decorator';
 import { RolesGuard } from '../common/guards/roles/roles.guard';
@@ -6,41 +21,63 @@ import { UserRole } from '../users/models/enums/user-role.enum';
 import { CreateRewardDto } from './dtos/create-reward.dto';
 import { UpdateRewardDto } from './dtos/update-reward.dto';
 import { RewardsService } from './rewards.service';
-
+import { Logger } from 'nestjs-pino';
 
 @Controller({
     path: 'rewards',
     version: '1',
 })
 export class RewardsController {
-    constructor(private readonly rewardsService: RewardsService) { }
 
-    // Admins can create new rewards
+    constructor(private readonly rewardsService: RewardsService, private readonly logger: Logger,) { }
+
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
     @Post()
     async create(@Body() createRewardDto: CreateRewardDto) {
-        return this.rewardsService.create(createRewardDto);
+        try {
+            const reward = await this.rewardsService.create(createRewardDto);
+            this.logger.log(`Reward created successfully: ${reward.id}`);
+            return reward;
+        } catch (error) {
+            this.logger.error(`Failed to create reward: ${error.message}`, error.stack);
+            throw new InternalServerErrorException('An error occurred while creating the reward');
+        }
     }
 
-    // Any authenticated user can view rewards (with pagination)
     @UseGuards(JwtAuthGuard)
     @Get()
     async findAll(
-        @Query('page', new ParseIntPipe()) page = 1,
-        @Query('limit', new ParseIntPipe()) limit = 10,
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     ) {
-        return this.rewardsService.findAll(page, limit);
+        try {
+            const rewards = await this.rewardsService.findAll(page, limit);
+            this.logger.log(`Fetched ${rewards.data.length} rewards`);
+            return rewards;
+        } catch (error) {
+            this.logger.error(`Failed to fetch rewards: ${error.message}`, error.stack);
+            throw new InternalServerErrorException('An error occurred while fetching rewards');
+        }
     }
 
-    // Any authenticated user can view a specific reward
     @UseGuards(JwtAuthGuard)
     @Get(':id')
     async findOne(@Param('id', new ParseIntPipe()) id: number) {
-        return this.rewardsService.findOne(id);
+        try {
+            const reward = await this.rewardsService.findOne(id);
+            if (!reward) {
+                this.logger.warn(`Reward not found with ID: ${id}`);
+                throw new NotFoundException(`Reward with ID ${id} not found`);
+            }
+            this.logger.log(`Fetched reward with ID: ${id}`);
+            return reward;
+        } catch (error) {
+            this.logger.error(`Failed to fetch reward with ID ${id}: ${error.message}`, error.stack);
+            throw error instanceof NotFoundException ? error : new InternalServerErrorException('An error occurred while fetching the reward');
+        }
     }
 
-    // Admins can update rewards
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
     @Patch(':id')
@@ -48,44 +85,61 @@ export class RewardsController {
         @Param('id', new ParseIntPipe()) id: number,
         @Body() updateRewardDto: UpdateRewardDto,
     ) {
-        return this.rewardsService.update(id, updateRewardDto);
+        try {
+            const updatedReward = await this.rewardsService.update(id, updateRewardDto);
+            this.logger.log(`Reward updated successfully with ID: ${id}`);
+            return updatedReward;
+        } catch (error) {
+            this.logger.error(`Failed to update reward with ID ${id}: ${error.message}`, error.stack);
+            throw new InternalServerErrorException('An error occurred while updating the reward');
+        }
     }
 
-    // Admins can delete rewards
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
     @Delete(':id')
     async remove(@Param('id', new ParseIntPipe()) id: number) {
-        return this.rewardsService.remove(id);
+        try {
+            await this.rewardsService.remove(id);
+            this.logger.log(`Reward deleted successfully with ID: ${id}`);
+            return { message: 'Reward deleted successfully' };
+        } catch (error) {
+            this.logger.error(`Failed to delete reward with ID ${id}: ${error.message}`, error.stack);
+            throw new InternalServerErrorException('An error occurred while deleting the reward');
+        }
     }
 
-    // Customers can claim a reward, which updates the 'Total Available Rewards Count'
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.CUSTOMER)
     @Patch(':id/claim')
     async claimReward(@Param('id', new ParseIntPipe()) id: number, @Request() req) {
-        // Here, you would include logic to check the user's points balance,
-        // deduct the required points, and record the redemption history.
-        // For simplicity, we'll focus on updating the reward's available count.
-
-        // Decrement the available rewards count
-        const updatedReward = await this.rewardsService.decrementAvailableRewardsCount(id);
-
-        // TODO: Update user's points balance and redemption history
-
-        return {
-            message: 'Reward claimed successfully',
-            reward: updatedReward,
-        };
+        try {
+            const updatedReward = await this.rewardsService.decrementAvailableRewardsCount(id);
+            this.logger.log(`Reward claimed successfully with ID: ${id} by user ID: ${req.user.id}`);
+            return {
+                message: 'Reward claimed successfully',
+                reward: updatedReward,
+            };
+        } catch (error) {
+            this.logger.error(`Failed to claim reward with ID ${id}: ${error.message}`, error.stack);
+            throw new InternalServerErrorException('An error occurred while claiming the reward');
+        }
     }
 
     @UseGuards(JwtAuthGuard)
-    @Get()
+    @Get('available')
     async findAllAvailable(
         @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
         @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     ) {
-        return this.rewardsService.findAllAvailable(page, limit);
+        try {
+            const rewards = await this.rewardsService.findAllAvailable(page, limit);
+            this.logger.log(`Fetched ${rewards.data.length} available rewards`);
+            return rewards;
+        } catch (error) {
+            this.logger.error(`Failed to fetch available rewards: ${error.message}`, error.stack);
+            throw new InternalServerErrorException('An error occurred while fetching available rewards');
+        }
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
@@ -95,8 +149,14 @@ export class RewardsController {
         @Param('id', ParseIntPipe) id: number,
         @Request() req,
     ) {
-        const userId = req.user.id;
-        return this.rewardsService.redeemReward(userId, id);
+        try {
+            const userId = req.user.id;
+            const reward = await this.rewardsService.redeemReward(userId, id);
+            this.logger.log(`Reward redeemed successfully with ID: ${id} by user ID: ${userId}`);
+            return reward;
+        } catch (error) {
+            this.logger.error(`Failed to redeem reward with ID ${id} for user ID: ${req.user.id}: ${error.message}`, error.stack);
+            throw new InternalServerErrorException('An error occurred while redeeming the reward');
+        }
     }
-
 }
