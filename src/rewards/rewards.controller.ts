@@ -22,15 +22,23 @@ import { CreateRewardDto } from './dtos/create-reward.dto';
 import { UpdateRewardDto } from './dtos/update-reward.dto';
 import { RewardsService } from './rewards.service';
 import { Logger } from 'nestjs-pino';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Rewards')
+@ApiBearerAuth('bearer')
 @Controller({
     path: 'rewards',
     version: '1',
 })
 export class RewardsController {
+    constructor(
+        private readonly rewardsService: RewardsService,
+        private readonly logger: Logger,
+    ) { }
 
-    constructor(private readonly rewardsService: RewardsService, private readonly logger: Logger,) { }
-
+    @ApiOperation({ summary: 'Create a new reward' })
+    @ApiResponse({ status: 201, description: 'Reward created successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
     @Post()
@@ -45,6 +53,9 @@ export class RewardsController {
         }
     }
 
+    @ApiOperation({ summary: 'Retrieve all rewards with pagination' })
+    @ApiResponse({ status: 200, description: 'Fetched all rewards' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard)
     @Get()
     async findAll(
@@ -61,6 +72,11 @@ export class RewardsController {
         }
     }
 
+    @ApiOperation({ summary: 'Retrieve a reward by ID' })
+    @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
+    @ApiResponse({ status: 200, description: 'Fetched reward successfully' })
+    @ApiResponse({ status: 404, description: 'Reward not found' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard)
     @Get(':id')
     async findOne(@Param('id', new ParseIntPipe()) id: number) {
@@ -74,10 +90,16 @@ export class RewardsController {
             return reward;
         } catch (error) {
             this.logger.error(`Failed to fetch reward with ID ${id}: ${error.message}`, error.stack);
-            throw error instanceof NotFoundException ? error : new InternalServerErrorException('An error occurred while fetching the reward');
+            throw error instanceof NotFoundException
+                ? error
+                : new InternalServerErrorException('An error occurred while fetching the reward');
         }
     }
 
+    @ApiOperation({ summary: 'Update a reward by ID' })
+    @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
+    @ApiResponse({ status: 200, description: 'Reward updated successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
     @Patch(':id')
@@ -95,6 +117,10 @@ export class RewardsController {
         }
     }
 
+    @ApiOperation({ summary: 'Delete a reward by ID' })
+    @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
+    @ApiResponse({ status: 200, description: 'Reward deleted successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
     @Delete(':id')
@@ -109,6 +135,10 @@ export class RewardsController {
         }
     }
 
+    @ApiOperation({ summary: 'Claim a reward by ID for a customer' })
+    @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
+    @ApiResponse({ status: 200, description: 'Reward claimed successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.CUSTOMER)
     @Patch(':id/claim')
@@ -126,6 +156,9 @@ export class RewardsController {
         }
     }
 
+    @ApiOperation({ summary: 'Retrieve all available rewards with pagination' })
+    @ApiResponse({ status: 200, description: 'Fetched all available rewards' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard)
     @Get('available')
     async findAllAvailable(
@@ -142,6 +175,10 @@ export class RewardsController {
         }
     }
 
+    @ApiOperation({ summary: 'Redeem a reward by ID for a customer' })
+    @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
+    @ApiResponse({ status: 200, description: 'Reward redeemed successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.CUSTOMER)
     @Post(':id/redeem')

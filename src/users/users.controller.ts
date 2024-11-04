@@ -19,15 +19,23 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles/roles.decorator';
 import { RolesGuard } from '../common/guards/roles/roles.guard';
 import { Logger } from 'nestjs-pino';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 
+@ApiTags('Users')
+@ApiBearerAuth('bearer')
 @Controller({
     path: 'users',
     version: '1',
 })
 export class UsersController {
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly logger: Logger,
+    ) { }
 
-    constructor(private readonly usersService: UsersService, private readonly logger: Logger) { }
-
+    @ApiOperation({ summary: 'Create a new user' })
+    @ApiResponse({ status: 201, description: 'User created successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
     @Post()
@@ -42,6 +50,9 @@ export class UsersController {
         }
     }
 
+    @ApiOperation({ summary: 'Retrieve all users' })
+    @ApiResponse({ status: 200, description: 'Fetched all users successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
     @Get()
@@ -56,6 +67,11 @@ export class UsersController {
         }
     }
 
+    @ApiOperation({ summary: 'Retrieve a user by ID' })
+    @ApiParam({ name: 'id', description: 'User ID', type: 'string' })
+    @ApiResponse({ status: 200, description: 'Fetched user successfully' })
+    @ApiResponse({ status: 403, description: 'Access denied' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard)
     @Get(':id')
     async findOne(@Param('id') id: string, @Request() req) {
@@ -69,10 +85,17 @@ export class UsersController {
             return user;
         } catch (error) {
             this.logger.error(`Failed to fetch user with ID: ${id}`, error.stack);
-            throw error instanceof ForbiddenException ? error : new InternalServerErrorException('An error occurred while fetching the user');
+            throw error instanceof ForbiddenException
+                ? error
+                : new InternalServerErrorException('An error occurred while fetching the user');
         }
     }
 
+    @ApiOperation({ summary: 'Update a user by ID' })
+    @ApiParam({ name: 'id', description: 'User ID', type: 'string' })
+    @ApiResponse({ status: 200, description: 'User updated successfully' })
+    @ApiResponse({ status: 403, description: 'Access denied' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard)
     @Patch(':id')
     async update(
@@ -91,10 +114,16 @@ export class UsersController {
             return updatedUser;
         } catch (error) {
             this.logger.error(`Failed to update user with ID: ${id}`, error.stack);
-            throw error instanceof ForbiddenException ? error : new InternalServerErrorException('An error occurred while updating the user');
+            throw error instanceof ForbiddenException
+                ? error
+                : new InternalServerErrorException('An error occurred while updating the user');
         }
     }
 
+    @ApiOperation({ summary: 'Delete a user by ID' })
+    @ApiParam({ name: 'id', description: 'User ID', type: 'string' })
+    @ApiResponse({ status: 200, description: 'User deleted successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
     @Delete(':id')

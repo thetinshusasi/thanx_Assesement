@@ -11,15 +11,23 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserRewardsService } from './user-rewards.service';
 import { Logger } from 'nestjs-pino';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
+@ApiTags('User Rewards')
+@ApiBearerAuth('bearer')
 @Controller({
     path: 'user-rewards',
     version: '1',
 })
 export class UserRewardsController {
+    constructor(
+        private readonly userRewardsService: UserRewardsService,
+        private readonly logger: Logger,
+    ) { }
 
-    constructor(private readonly userRewardsService: UserRewardsService, private readonly logger: Logger,) { }
-
+    @ApiOperation({ summary: 'Get user points balance' })
+    @ApiResponse({ status: 200, description: 'Fetched user points balance successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard)
     @Get('balance')
     async getPointsBalance(@Request() req) {
@@ -34,6 +42,11 @@ export class UserRewardsController {
         }
     }
 
+    @ApiOperation({ summary: 'Get user redemption history with pagination' })
+    @ApiQuery({ name: 'page', required: false, description: 'Page number', example: 1 })
+    @ApiQuery({ name: 'limit', required: false, description: 'Number of items per page', example: 10 })
+    @ApiResponse({ status: 200, description: 'Fetched redemption history successfully' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
     @UseGuards(JwtAuthGuard)
     @Get('redemption-history')
     async getRedemptionHistory(

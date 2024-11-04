@@ -18,22 +18,34 @@ async function bootstrap() {
 
   // Enable URI Versioning
 
-
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
   const config = new DocumentBuilder()
     .setTitle('API Documentation')
     .setDescription('API endpoints documentation')
     .setVersion('1.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        description: 'Enter JWT token',
-        name: 'Authorization',
-        in: 'header',
-      },
-      'access-token',
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description: 'Enter JWT token',
+      name: 'Authorization',
+      in: 'header',
+    },
+      'bearer',
     )
+    // .addBearerAuth(
+    //   {
+    //     type: 'http',
+    //     scheme: 'bearer',
+    //     bearerFormat: 'JWT',
+    //     description: 'Enter JWT token',
+    //     name: 'Authorization',
+    //     in: 'header',
+    //   },
+    //   'access-token',
+    // )
     .addServer('http://localhost:3000')
     .build();
 
@@ -44,9 +56,7 @@ async function bootstrap() {
       supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'], //
     },
   });
-  app.enableVersioning({
-    type: VersioningType.URI,
-  });
+
   await app.listen(process.env.PORT || 3000);
 }
 bootstrap();
