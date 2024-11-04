@@ -36,6 +36,8 @@ export class RewardsController {
         private readonly logger: Logger,
     ) { }
 
+
+
     @ApiOperation({ summary: 'Create a new reward' })
     @ApiResponse({ status: 201, description: 'Reward created successfully' })
     @ApiResponse({ status: 500, description: 'Internal server error' })
@@ -71,6 +73,28 @@ export class RewardsController {
             throw new InternalServerErrorException('An error occurred while fetching rewards');
         }
     }
+
+
+    @ApiOperation({ summary: 'Retrieve all available rewards with pagination' })
+    @ApiResponse({ status: 200, description: 'Fetched all available rewards' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
+    @UseGuards(JwtAuthGuard)
+    @Get('available')
+    async findAllAvailable(
+        @Request() req,
+    ) {
+        try {
+            const page = req.query.page || 1;
+            const limit = req.query.limit || 10;
+            const rewards = await this.rewardsService.findAllAvailable(page, limit);
+            this.logger.log(`Fetched ${rewards.data.length} available rewards`);
+            return rewards;
+        } catch (error) {
+            this.logger.error(`Failed to fetch available rewards: ${error.message}`, error.stack);
+            throw new InternalServerErrorException('An error occurred while fetching available rewards');
+        }
+    }
+
 
     @ApiOperation({ summary: 'Retrieve a reward by ID' })
     @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
@@ -117,6 +141,8 @@ export class RewardsController {
         }
     }
 
+
+
     @ApiOperation({ summary: 'Delete a reward by ID' })
     @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
     @ApiResponse({ status: 200, description: 'Reward deleted successfully' })
@@ -156,24 +182,7 @@ export class RewardsController {
         }
     }
 
-    @ApiOperation({ summary: 'Retrieve all available rewards with pagination' })
-    @ApiResponse({ status: 200, description: 'Fetched all available rewards' })
-    @ApiResponse({ status: 500, description: 'Internal server error' })
-    @UseGuards(JwtAuthGuard)
-    @Get('available')
-    async findAllAvailable(
-        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    ) {
-        try {
-            const rewards = await this.rewardsService.findAllAvailable(page, limit);
-            this.logger.log(`Fetched ${rewards.data.length} available rewards`);
-            return rewards;
-        } catch (error) {
-            this.logger.error(`Failed to fetch available rewards: ${error.message}`, error.stack);
-            throw new InternalServerErrorException('An error occurred while fetching available rewards');
-        }
-    }
+
 
     @ApiOperation({ summary: 'Redeem a reward by ID for a customer' })
     @ApiParam({ name: 'id', description: 'Reward ID', type: 'integer' })
