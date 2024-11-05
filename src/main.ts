@@ -18,9 +18,14 @@ async function bootstrap() {
 
   // Enable URI Versioning
 
-  const swaggerUrl = `${process.env.SWAGGER_HOST}:${process.env.PORT}`
   app.enableVersioning({
     type: VersioningType.URI,
+  });
+
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN, // Allow your frontend URL
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
   });
   const config = new DocumentBuilder()
     .setTitle('API Documentation')
@@ -47,7 +52,7 @@ async function bootstrap() {
     //   },
     //   'access-token',
     // )
-    .addServer(swaggerUrl)
+    .addServer(`http://${process.env.SWAGGER_HOST}:${process.env.PORT}`)
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

@@ -52,7 +52,7 @@ export class UserRewardsController {
     async getRedemptionHistory(
         @Request() req,
         @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+        @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number,
     ) {
         const userId = req.user.id;
         try {

@@ -42,7 +42,7 @@ export class RewardsService {
 
     async findAll(
         page = 1,
-        limit = 10,
+        limit = 100,
     ): Promise<{ data: Reward[]; total: number }> {
         try {
             const [data, total] = await this.rewardsRepository.findAndCount({

@@ -62,7 +62,7 @@ export class RewardsController {
     @Get()
     async findAll(
         @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+        @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number,
     ) {
         try {
             const rewards = await this.rewardsService.findAll(page, limit);
@@ -85,7 +85,7 @@ export class RewardsController {
     ) {
         try {
             const page = req.query.page || 1;
-            const limit = req.query.limit || 10;
+            const limit = req.query.limit || 100;
             const rewards = await this.rewardsService.findAllAvailable(page, limit);
             this.logger.log(`Fetched ${rewards.data.length} available rewards`);
             return rewards;

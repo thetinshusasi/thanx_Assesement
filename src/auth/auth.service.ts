@@ -42,7 +42,7 @@ export class AuthService {
 
     async login(user: User) {
         try {
-            const payload = { sub: user.id, role: user.role };
+            const payload = { userId: user.id, sub: user.id, role: user.role };
             const token = this.jwtService.sign(payload, {
                 secret: this.configService.get('JWT_SECRET'),
                 algorithm: this.configService.get('JWT_ALGORITHM') || 'HS256',
@@ -50,7 +50,7 @@ export class AuthService {
             });
 
             this.logger.log(`User ${user.email} logged in successfully`);
-            return { access_token: token };
+            return { token };
         } catch (error) {
             this.logger.error(`Error generating token for user ${user.email}: ${error.message}`, error.stack);
             throw new InternalServerErrorException('An unexpected error occurred during login');
