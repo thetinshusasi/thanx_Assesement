@@ -18,6 +18,7 @@ async function bootstrap() {
 
   // Enable URI Versioning
 
+  const swaggerUrl = `${process.env.SWAGGER_HOST}:${process.env.PORT}`
   app.enableVersioning({
     type: VersioningType.URI,
   });
@@ -46,7 +47,7 @@ async function bootstrap() {
     //   },
     //   'access-token',
     // )
-    .addServer('http://localhost:3000')
+    .addServer(swaggerUrl)
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -56,7 +57,12 @@ async function bootstrap() {
       supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'], //
     },
   });
+  app.getHttpAdapter().get('/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(document);
+  });
 
-  await app.listen(process.env.PORT || 3000);
+
+  await app.listen(process.env.PORT || 4000);
 }
 bootstrap();
